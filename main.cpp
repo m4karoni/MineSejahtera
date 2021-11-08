@@ -32,23 +32,22 @@ void welcome() {
 }
 
 void promptUser(User person[],string ic, string name, string pw, int &rear, int choice) {
-  cout << "person[" << rear << "]" << endl;
   cout << "IC Number (without spaces or \"-\"): ";
-  cin >> person[rear].ic;
-  cout << "person[" << rear << "].ic = " << person[rear].ic << endl; 
-  if (rear == 0) {
-    cout << "Username (no spaces allowed): ";
+  cin.ignore();
+  getline(cin, person[rear].ic);
+  if (rear == 0 && choice == 2) {
+    cout << "Username: ";
   } else {
     cout << "Dependent's name: ";
   }
-  cin >> person[rear].name;
-  cout << "person[" << rear << "].name = " << person[rear].name << endl;
+  getline(cin, person[rear].name);
   if (rear == 0) {
     cout << "Password: ";
-    cin >> person[rear].pw;
-    cout << "person[" << rear << "].pw = " << person[rear].pw << endl;
+    getline(cin, person[rear].pw);
   }
-  rear++;
+  if (choice == 2) {
+   rear++; 
+  }
 }
 
 // enqueuing dependents
@@ -126,17 +125,17 @@ void dispHistory() {
 }
 
 // verify login
-void logIn(User user[], string ic, string password) {
+bool login(User user[], string ic, string password) {
   if(ic == user[0].ic && password == user[0].pw) {
-    cout << "Login succesful!" << endl;
+    cout << "\nLogin succesful!" << endl;
     sleep(1);
     cls();
+    return true;
   } else {
-    cout << "IC and password not matched!" << endl;
-    cout << user[0].ic << endl;
-    cout << user[0].pw << endl;
+    cout << "\nIC and password not matched!" << endl;
     sleep(1);
-    // cls();
+    cls();
+    return false;
   }
 }
 
@@ -147,15 +146,12 @@ int main() {
   string icNum;
   string name;
   string password;
-  bool login = false;
-
+  bool logged = false;
+  bool quit = false;
+  
   do {
-    cout << front << endl;
-    cout << rear << endl;
-    cout << dependent[0].ic << endl;
-    cout << dependent[0].pw << endl;
+    do {
     welcome();
-    
     cin >> choice;
     
     cls();
@@ -173,19 +169,16 @@ int main() {
 
           // function for passing ic and password into struct
           cout << "IC Number (without spaces and \"-\"): ";
-
           cin >> icNum;
-
+          
           cout << "Password: ";
-        
           cin >> password;
 
           // verify login
-          logIn(dependent, icNum, password);
-        }
+          logged = login(dependent, icNum, password);
+          }
         break;
       }
-      
       case 2: {
         cout << "Sign Up" << endl;
         cout << "=======" << endl;
@@ -193,8 +186,8 @@ int main() {
         // function for passing ic and password into struct
         nQueue(dependent, icNum, name, password, front, rear, choice);
         cls();
+        break;
       }
-      break;
       
       default: {
         cout << "Invalid option!" << endl;
@@ -203,7 +196,15 @@ int main() {
         break;
       }
     }
-  } while (!login);
+  } while (!logged);
+
+    cout << "Welcome " << dependent[0].name << "!" << endl;
+    for (int i = 0; i < dependent[0].name.length() + 9; i++) {
+      cout << "=";
+    }
+    cout << "1. Locations" << endl;
+    cout << "2. Dependents" << endl;
+  } while(!quit);
 
 
   return 0;
