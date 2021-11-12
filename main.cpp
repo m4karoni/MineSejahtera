@@ -5,7 +5,8 @@ using namespace std;
 
 int const SIZE = 5;
 
-// structures
+/* STRUCTURES */
+
 // using queue array for User
 struct User {
   string name, ic, pw;
@@ -18,7 +19,7 @@ struct Hist {
   Hist* nxtHist;
 } *top;
 
-// functions
+/* FUNCTIONS */
 
 // clear screen function
 void cls() {
@@ -29,7 +30,11 @@ void cls() {
   #endif
 }
 
+// loading icon
 void loading(string mode) {
+  /*
+  This function is just to simulate a loding icon
+  */
   if (mode == "line") {
    for(int i = 0; i < 1; i++) {
     cout << "\b\\" << flush;
@@ -50,14 +55,25 @@ void loading(string mode) {
   }
 }
 
-void optionMenu(string menu) {
-  cout << "* " << menu << " *" << endl;
-  for(int i = 0; i < menu.length() + 4; i++){
+// title format
+void optionMenu(string title) {
+  /*
+
+  This function generates a menu like interface for user
+  e.g.
+
+  * <your string for the title> *
+  ===============================
+
+  */
+  cout << "* " << title << " *" << endl;
+  for(int i = 0; i < title.length() + 4; i++){
     cout << "=";
   }
   cout << endl;
 }
 
+// welcome message
 void welcome() {
   optionMenu("Welcome to MineSejahtera program");
   cout << "1. Sign In" << endl;
@@ -88,7 +104,7 @@ void promptLoc() {
   cout << "Which Location are you Entering? : " <<endl;
 }
 
-// enqueuing dependents
+// enqueuing dependents (including user)
 void nQueue(User dependent[], string ic, string name, string pw, int &front, int &rear, int choice) {
   if(rear == SIZE - 1) {
     cout << "Maximum number of dependent reached!" << endl;
