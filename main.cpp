@@ -33,7 +33,7 @@ void cls() {
 // loading icon
 void loading(string mode) {
   /*
-  This function is just to simulate a loding icon
+  This function is just to simulate a loading icon
   */
   if (mode == "line") {
    for(int i = 0; i < 1; i++) {
