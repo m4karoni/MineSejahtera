@@ -1,9 +1,16 @@
 #include <iostream>
 #include <stdlib.h>
-#include <unistd.h>
+
+#ifdef __linux__
+  #include <unistd.h>
+#elif _WIN32
+  #include <Windows.h>
+#endif
+
 using namespace std;
 
 int const SIZE = 5;
+const int EXAMPLE_SIZE = 5;
 
 /* STRUCTURES */
 
@@ -16,7 +23,7 @@ struct User {
 struct Hist {
   string location;
   int yr, mth, day, hr, min, sec;
-  Hist* nxtHist;
+  Hist* prvHist;
 } *top;
 
 /* FUNCTIONS */
@@ -30,33 +37,42 @@ void cls() {
   #endif
 }
 
+// sleep function
+void slp(double microseconds = 1) {
+  #ifdef __linux__
+    usleep(microseconds*1000000);
+  #else
+    sleep(microseconds);
+  #endif
+}
+
 // loading icon
-void loading(string mode) {
+void loading(string mode = "") {
   /*
-  This function is just to simulate a loding icon
+  This function is just to simulate a loading icon
   */
   if (mode == "line") {
-   for(int i = 0; i < 1; i++) {
+   for(int i = 0; i <= 2; i++) {
     cout << "\b\\" << flush;
-    sleep(1);
+    slp(0.3);
     cout << "\b|" << flush;
-    sleep(1);
+    slp(0.3);
     cout << "\b/" << flush;
-    sleep(1);
+    slp(0.3);
     cout << "\b-" << flush;
-    sleep(1);
+    slp(0.3);
+    }
     cout << "\b " << flush;
-    } 
   } else {
-    for(int i = 0; i < 3; i++) {
-      sleep(1);
+    for(int i = 0; i < 3; i++) {;
+      slp();
       cout << "." << flush;
     }
   }
 }
 
 // title format
-void optionMenu(string title) {
+void menu(string title) {
   /*
 
   This function generates a menu like interface for user
@@ -75,10 +91,22 @@ void optionMenu(string title) {
 
 // welcome message
 void welcome() {
-  optionMenu("Welcome to MineSejahtera program");
+  menu("Welcome to MineSejahtera program");
   cout << "1. Sign In" << endl;
   cout << "2. Sign Up" << endl;
   cout << "\nOption: ";
+}
+
+// press any key to continue...
+void enter2Ctn() {
+  slp(0.5);
+  cout << "Press enter key to continue... " << flush;
+  #ifdef __linux__
+    getchar();
+  #elif _WIN32
+    #include <conio.h>
+    _getch();
+  #endif
 }
 
 void promptUser(User person[],string ic, string name, string pw, int &rear, int choice) {
@@ -108,8 +136,7 @@ void promptLoc() {
 void nQueue(User dependent[], string ic, string name, string pw, int &front, int &rear, int choice) {
   if(rear == SIZE - 1) {
     cout << "Maximum number of dependent reached!" << endl;
-    cout << "\nPress any key to continue...";
-    getchar();
+    enter2Ctn();
   } else if (front == -1 && rear == -1) { 
     // register user
     front++;
@@ -118,108 +145,236 @@ void nQueue(User dependent[], string ic, string name, string pw, int &front, int
     loading("line");
     cout << endl << "Registered successfully!" << endl;
     front++;
-    sleep(2);
+    slp(2);
   } else if (dependent[0].ic != "" && dependent[0].pw != "" && choice == 2) {
     cls();
     cout << "User already exists!" << endl;
-    sleep(2);
+    slp(2);
   } 
   else {
     promptUser(dependent, ic, name, pw, rear, choice);
     cout << endl << "Dependent successfully added!" << endl;
-    sleep(2);
+    slp(2);
   }
 }
 
 // display list of dependents
 void dispQueue(User dependent[], int front, int rear) {
-  cout << "\n**********************\n\n";
+  cout << "\n*********************\n\n";
   if(front <= 1 && rear <= 1) {
     cout << "No dependent available\n\n";
   } else {
     cout << "Displaying dependents" << flush;
-    loading("");
-    sleep(1);
+    loading();
+    slp();
     cout << "\x1b[2K";
     while (front >= 1 && front < rear) {
       cout << "\rDependent #" << front << endl;
       cout << "IC Number: " << dependent[front].ic << endl;
       cout << "Name: " << dependent[front].name << "\n\n";
-      sleep(1);
+      slp(0.5);
       front++;
     }
   }
 }
 
 // dequeuing dependents
-void dQueue(User dependent[], int front, int &rear) {
-  int remove = 0;
+void dQueue(User dependent[], int front, int &rear, int option) {
+  int edit = 0;
+  int editOption = 0;
+
   if(front >= 1 && rear >= 2) {
-    cout << "\nWhich dependent do you wish to remove?" << endl;
-    dispQueue(dependent, front,rear);
-    cout << "\nOption: ";
-    cin >> remove;
-    cin.ignore();
-    cout << "*********************" << endl;
-    cout << "\nRemoving Dependent #" << remove << endl;
-    cout << "Removing dependent " << dependent[remove].name << flush; 
-    loading("");
-    sleep(1);
-    cout << "\x1b[2K";
-    cout << "\rRemoving IC number " << dependent[remove].ic << flush;
-    loading("");
-    sleep(1);
-    cout << "\x1b[2K";
-    cout << "\r\nDependent removed" << endl;
-    sleep(2);
-    for (int i = remove; i < rear; i++) {
-      dependent[i].ic = dependent[i + 1].ic;
-      dependent[i].name = dependent[i + 1].name;
+    if (option == 2) {
+      cout << "\nWhich dependent do you wish to edit?" << endl;    
+    }  else if(option == 3) {
+      cout << "\nWhich dependent do you wish to remove?" << endl;
     }
-    rear--;
-  } else {
+
+    if (option != 1) {
+      dispQueue(dependent, front,rear);
+      cout << "\nOption: ";
+      cin >> edit;
+      cin.ignore();
+    }
+    
+    if (edit == 2 || option == 1) {
+      cout << "*********************" << endl;
+      if(edit == 2) {
+        cout << "\nEditing Dependent #" << edit << endl;
+      } else {
+        cout << "\nEditing Profile" << endl;
+      }
+      cout << "\n1. Name" << endl;
+      cout << "2. IC number" << endl;
+      cout << "\n0. Back" << endl;
+      cout << "Option: ";
+      cin >> editOption;
+      cin.ignore();
+      
+      switch(editOption) {
+        case 0:
+        break;
+        case 1:
+        cout << "New name: ";
+        if (edit == 2) {
+          getline(cin, dependent[edit].name);
+        } else {
+          getline(cin, dependent[0].name);
+        }
+        break;
+
+        case 2:
+        cout << "New IC: ";
+        if (edit == 2) {
+          getline(cin, dependent[edit].ic);
+        } else {
+          getline(cin, dependent[0].ic);
+        }
+        break;
+
+        default:
+        cout << "Invalid option!" << endl;
+        enter2Ctn();
+      }
+      cout << endl;
+      loading("line");
+      cout << "Edit successful!" << endl;
+      slp();
+      
+    } else if(edit == 3) {
+      cout << "*********************" << endl;
+      cout << "\nRemoving Dependent #" << edit << endl;
+      cout << "Removing dependent " << dependent[edit].name << flush; 
+      loading();
+      slp(0.5);
+      cout << "\x1b[2K";
+      cout << "\rRemoving IC number " << dependent[edit].ic << flush;
+      loading();
+      slp(0.5);
+      cout << "\x1b[2K";
+      cout << "\r\nDependent removed" << endl;
+      slp(0.5);
+      for (int i = edit; i < rear; i++) {
+        dependent[i].ic = dependent[i + 1].ic;
+        dependent[i].name = dependent[i + 1].name;
+        }
+      rear--;
+      }
+
+  } else if (option == 1) {
     cls();
-    cout << "No dependent to be removed" << endl;
-    sleep(2);
-  }
-}
+    cout << "Editing Profile" << endl;
+    cout << "*********************" << endl;
+    cout << "\n1. Name" << endl;
+    cout << "2. IC number" << endl;
+    cout << "\n0. Back" << endl;
+    cout << "\nOption: ";
+    cin >> editOption;
+    cin.ignore();
+      
+    switch(editOption) {
+      case 0: 
+        break;
+      case 1: {
+        cout << "\nNew name: ";
+        getline(cin, dependent[0].name);
+        break;
+      }
 
-void addHistory(Hist*& front, Hist* history, Hist* rear) {
-  /*Adding data from top*/
-  history->nxtHist = NULL;
-  /* Is this a function? because you cannot define a function in another function in C++
-     Not exactly sure if C# can or not
-  Hist * addRear(Hist *head, Hist* history)
-  {
-    Hist *guide = head;
-    while(guide->nxtHist != NULL)
-    {
-      guide = guide->nxtHist;
+      case 2: {
+        cout << "\nNew IC: ";
+        getline(cin, dependent[0].ic);
+        break;
+      }
+
+      default: {
+        cout << "Invalid option!" << endl;
+        enter2Ctn();
+      }
     }
-    guide->nxtHist = nHist;
+    cout << endl;
+    if(editOption != 0) {
+      loading("line");
+      cout << "\x1b[2K";
+      cout << "\rEdit successful!" << endl;
+      slp();
+    }
+    
+  } else { 
+    cls();
+      if (option == 2) {
+        cout << "No dependent to be edited\n\n";
+        enter2Ctn();
+      }
+      else if (option == 3) {
+        cout << "No dependent to be removed\n\n";
+        enter2Ctn();
+      }
   }
-  */
 }
 
-void delHistory() {
-  /*Deleting data from History*/
-  /*
-  Hist * deleteRear(Hist *head)
-  {
-    Car *rear = head;
+Hist* addHistory(Hist* hist, string location, int yr, int mth, int day, int hr, int min, int sec) {
+  // Create new node temp and allocate memory
+  Hist* temp;
+
+  temp->location = location;
+  temp->yr = yr;
+  temp->mth = mth; 
+  temp->day = day;
+  temp->hr = hr;
+  temp->min = min;
+  temp->sec = sec;
+
+  temp->prvHist = hist;
+
+  hist = temp;
+
+  top = temp;
+
+  return hist;
+}
+/*
+void delHistory(Hist *top) {
+  Deleting data from History
+    Hist *rear = top;
     while(rear->nxtHist->nxtHist != NULL)
     {
       rear = rear->nxtHist;
-      cout << "Deleting " << rear->nxtHist->Hist << endl << endl;
+      cout << "----- Deleting -----" << rear->nxtHist << endl << endl;
     }
     rear->nxtHist = NULL;
-  }
-  */
-}
 
-void dispHistory(Hist* head) {
-  /* Displaying each variable*/
-  Hist *nav = head;
+}*/
+
+Hist* delHistory(Hist* history) //If verify worked bool (Can remain unused to act as void)
+{
+  /*Deleting data from History*/
+
+    if (top == NULL)
+    {
+      cout << "\n-------There is no existing History for user.-------" << endl;
+      exit(1); //Failed
+    }
+    else
+    {
+        // Top assign into temp
+        history = history->prvHist;
+ 
+        // Assign second Hist to top
+        top = history;
+ 
+        // Destroy connection between
+        // first and second
+ 
+        // Release memory of top Hist
+
+        return history; //Success
+    }
+}
+/*
+void dispHistory() {
+   Displaying each variable
+  Hist *nav = top;
   while(nav != NULL)
   {
     cout << "Location: " << nav->location <<endl;
@@ -232,20 +387,57 @@ void dispHistory(Hist* head) {
     nav = nav->nxtHist;
   }
 
+}*/
+void dispHistory(Hist* hist) {
+
+    Hist* temp; //To avoid changing the original, use temp
+
+    temp = hist; //Mark temp as the original so it contains all the info
+ 
+    // Check for stack underflow
+    if (temp == NULL)
+    {
+      cout << "\nNo History to Display";
+      enter2Ctn();
+    }
+    else
+    {
+      
+        while (temp != NULL)
+        {
+ 
+          // Print Hist data
+ 
+  //string location; Reference!!!
+  //int yr, mth, day, hr, min, sec;
+
+          cout << "Location : " + temp->location << endl;
+          cout << "Year:" << temp->yr << endl;
+          cout << "Month: "<< temp->mth << endl;
+          cout << "Day: "<< temp->day << endl;
+          cout << "Time: "<< temp->hr << ":";
+          cout << temp->min << ":";
+          cout << temp->sec << endl;
+
+
+          // Assign temp link to nxtHist
+        }
+    }
 }
+
 
 // verify login
 bool login(User user[], string ic, string password) {
   if(ic == user[0].ic && password == user[0].pw) {
     loading("line");
-    cout << "\nLogin succesful!" << endl;
-    sleep(2);
+    cout << "\nLogin successful!" << endl;
+    slp(1);
     cls();
     return true;
   } else {
     loading("line");
     cout << "\nIC and password not matched!" << endl;
-    sleep(2);
+    slp();
     cls();
     return false;
   }
@@ -254,18 +446,27 @@ bool login(User user[], string ic, string password) {
 //main
 int main() {
   User dependent[SIZE];
+  Hist* history;
   int choice = 0, front = -1, rear = -1;
   string icNum;
   string name;
   string password;
   bool logged = false;
   bool quit = false;
+
+  const int EXAMPLE_SIZE = 5;
+
+  //Create example Locations that can be added
+              string exampleLocations[EXAMPLE_SIZE] = {
+                  "Ali'House", "Mamak Store", "TomTom's", "Abali", "Rock'n Stone" 
+              };
   
   do {
     while(!logged) {
       cls();
       welcome();
       cin >> choice;
+      cin.clear();
       cin.ignore();
       cls();
 
@@ -273,11 +474,11 @@ int main() {
         case 1: {
           if (front == -1 && rear == -1) {
             cout << "No existing account" << endl;
-            sleep(2);
+            slp();
             cls();
             break;
           } else {
-            optionMenu("Sign In");
+            menu("Sign In");
             // function for passing ic and password into struct
             cout << "IC Number (without spaces and \"-\"): ";
             getline(cin, icNum);
@@ -290,8 +491,9 @@ int main() {
             }
           break;
         }
+
         case 2: {
-          optionMenu("Sign Up");
+          menu("Sign Up");
           // function for passing ic and password into struct
           nQueue(dependent, icNum, name, password, front, rear, choice);
           cls();
@@ -300,7 +502,6 @@ int main() {
       
         default: {
           cout << "Invalid option!" << endl;
-          sleep(2);
           cls();
           break;
         }
@@ -311,41 +512,66 @@ int main() {
     string welcomeMsg = "Welcome " + dependent[0].name + "!";
     
     cls();
-    optionMenu(welcomeMsg);
+    menu(welcomeMsg);
     cout << "1. Locations" << endl;
     cout << "2. Dependents" << endl;
-    cout << "3. Log out" << endl;
-    cout << "4. Quit" << endl;
+    cout << "3. Profile" << endl;
+    cout << "4. Log out" << endl;
+    cout << "5. Quit" << endl;
     cout << "\nOption: ";
     cin >> mainOption;
+    cin.clear();
     cin.ignore();
 
     switch(mainOption) {
       case 1: {
         int locOption = 0;
         cls();
-        optionMenu("Location");
+        menu("Location");
         cout << "1. Check in" << endl;
         cout << "2. Check out" << endl;
         cout << "3. History" << endl;
         cout << "\n0. Back" << endl;
         cout << "Option: ";
         cin >> locOption;
+        cin.clear();
         cin.ignore();
 
         switch(locOption) {
+          case 0: {
+            // back
+            break;
+          }
+
           case 1: {
+            int currentLocation = rand() % (EXAMPLE_SIZE - 1);
+            time_t now = time(0);
+            tm *ltm = localtime(&now);
+            addHistory(history, exampleLocations[currentLocation], 1900 + ltm->tm_year, 1 + ltm->tm_mon, ltm->tm_mday, 8 + ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+
+            cout << "Check in successful!" << endl;
+            cout << "Location : " << history->location << endl;
+            cout << "Year:" << 1900 + history->yr << endl;
+            cout << "Month: "<< 1 + history->mth << endl;
+            cout << "Day: "<< history->day << endl;
+            cout << "Time: "<< 8 + history->hr << ":";
+            cout << history->min << ":";
+            cout << history->sec << "\n\n";
+            enter2Ctn();
             // check in
             break;
           }
 
           case 2: {
             // check out
+            history = delHistory(history);
             break;
           }
 
           case 3: {
             // display history
+            dispHistory(history);
+            enter2Ctn();
             break;
           }
         }
@@ -355,13 +581,15 @@ int main() {
       case 2: {
         int depOption = 0;
         cls();
-        optionMenu("Dependent");
+        menu("Dependent");
         cout << "1. Add Dependent" << endl;
-        cout << "2. Remove Dependent" << endl;
-        cout << "3. Display Dependents" << endl;
+        cout << "2. Edit Dependent" << endl;
+        cout << "3. Remove Dependent" << endl;
+        cout << "4. Display Dependents" << endl;
         cout << "\n0. Back" << endl;
         cout << "Option: ";
         cin >> depOption;
+        cin.clear();
         cin.ignore();
 
         switch(depOption) {
@@ -376,39 +604,84 @@ int main() {
           }
 
           case 2: {
-            // remove dependent
-            dQueue(dependent, front, rear);
+            // edit dependent
+            dQueue(dependent, front, rear, depOption);
             break;
           }
 
           case 3: {
+            // remove dependent
+            dQueue(dependent, front, rear, depOption);
+            break;
+          }
+
+          case 4: {
             // display dependent
             dispQueue(dependent, front, rear);
-            cout << "Press any key to continue... ";
-            getchar();
+            enter2Ctn();
+            break;
+          }
+
+          default: {
+            cout << "\nInvalid option!" << endl;
+            enter2Ctn();
+          }
+        }
+        break;
+      }
+
+      case 3: {
+        int profOption = 0;
+        cls();
+        menu("Profile");
+        cout << "Name: " << dependent[0].name << endl;
+        cout << "IC Number: " << dependent[0].ic << endl << endl;
+        dispQueue(dependent, front, rear);
+        cout << "*********************" << endl;
+        cout << "\n1. Edit profile" << endl;
+        cout << "\n0. Back" << endl;
+        cout << "Option: ";
+        cin >> profOption;
+        cin.clear();
+        cin.ignore();
+        switch(profOption) {
+          case 0:
+            break;
+          case 1: {
+            dQueue(dependent, front, rear, profOption);
+            break;
+          }
+          default: {
+            cout << "\nInvalid option!" << endl;
+            slp(0.5);
             break;
           }
         }
         break;
       }
 
-      case 3:
+      case 4: {
         cout << "\nLogging out... ";
         loading("line");
         logged = false;
         break;
+      }
 
-      case 4:
+      case 5: {
         cout << "\nQuitting" << flush;
-        loading("");
-        sleep(1);
+        loading();
         cout << "\n\n";
         quit = true;
         break;
+      }
+
+      default: {
+        cout << "\nInvalid option!" << endl;
+        slp(0.5);
+      }
     }
     
   } while(!quit);
-
 
   return 0;
 }
